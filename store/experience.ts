@@ -8,7 +8,6 @@ interface ExperienceState {
   current: ChapterId | null;
   previous: ChapterId | null;
   phase: Phase;
-  transitionId: string | null;
   /** True while the user should not be able to interact (transitions). */
   locked: boolean;
   visited: ChapterId[];
@@ -21,7 +20,7 @@ interface ExperienceState {
   loadingVisible: boolean;
 
   setCurrent(id: ChapterId | null): void;
-  setPhase(phase: Phase, transitionId?: string | null): void;
+  setPhase(phase: Phase): void;
   markVisited(id: ChapterId): void;
   setSound(on: boolean): void;
   setQuality(q: Quality): void;
@@ -105,7 +104,6 @@ export const useExperience = create<ExperienceState>((set, get) => ({
   current: null,
   previous: null,
   phase: 'booting',
-  transitionId: null,
   locked: true,
   visited: readVisited(),
   sound: true,
@@ -119,8 +117,8 @@ export const useExperience = create<ExperienceState>((set, get) => ({
     if (cur === id) return;
     set({ previous: cur, current: id });
   },
-  setPhase(phase, transitionId = get().transitionId) {
-    set({ phase, transitionId: phase === 'idle' ? null : transitionId, locked: phase !== 'idle' });
+  setPhase(phase) {
+    set({ phase, locked: phase !== 'idle' });
   },
   markVisited(id) {
     const v = get().visited;

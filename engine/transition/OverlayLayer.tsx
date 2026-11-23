@@ -16,7 +16,6 @@ export function OverlayLayer() {
   const sky = useRef<HTMLDivElement>(null);
   const dark = useRef<HTMLDivElement>(null);
   const loader = useRef<HTMLDivElement>(null);
-  const phase = useExperience((s) => s.phase);
   const locked = useExperience((s) => s.locked);
   const gate = useExperience((s) => s.gate);
   const loadingVisible = useExperience((s) => s.loadingVisible);

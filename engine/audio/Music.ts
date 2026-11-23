@@ -54,7 +54,6 @@ class Music {
   private bgDry: GainNode | null = null;
   private bgWet: GainNode | null = null;
   private bgOff = false;
-  private timer: ReturnType<typeof setInterval> | null = null;
   private nextTime = 0;
   private step = 0;
   private mood = MOOD.intro;
@@ -93,7 +92,7 @@ class Music {
     this.padFilter.connect(this.bgWet);
 
     this.nextTime = ctx.currentTime + 0.2;
-    this.timer = setInterval(() => this.schedule(), 100);
+    setInterval(() => this.schedule(), 100);
     this.applyMute();
     useExperience.subscribe((s, p) => {
       if (s.sound !== p.sound) this.applyMute();

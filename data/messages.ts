@@ -3,8 +3,6 @@ export const messages = {
   intro: {
     greeting: 'HEY, YOU!',
     subline: 'Someone has created a little universe just for you.',
-    openLabel: 'OPEN',
-    continueLabel: 'STEP INSIDE',
     /** Written on the letter. Must NOT mention the birthday (that's the surprise). */
     letter: {
       salutation: 'Dear you,',

@@ -37,6 +37,4 @@ export const nature = {
       photo: null,
     },
   ] satisfies NatureStop[],
-  continueLabel: 'FOLLOW THE BUTTERFLY',
-  seedHint: 'Open the light',
 } as const;

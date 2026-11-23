@@ -1,7 +1,6 @@
 'use client';
 
-import { lazy, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { lazy, useEffect, useRef } from 'react';
 import { gsap, useGSAP } from '@/animation/gsap';
 import { fadeOut, maskLines } from '@/animation/text';
 import { SceneIn } from '@/engine/stage/tunnel';
@@ -21,8 +20,6 @@ export default function UniverseChapter() {
   const root = useRef<HTMLDivElement>(null);
   const welcome = useRef<HTMLHeadingElement>(null);
   const enterBtn = useRef<HTMLDivElement>(null);
-  const dive = useRef<gsap.core.Timeline | null>(null);
-  const [comingSoon, setComingSoon] = useState(false);
   const copy = messages.universe;
   const next = nextChapter('universe');
 
@@ -53,24 +50,15 @@ export default function UniverseChapter() {
     return registerHandles('universe', { enter, exits: { intoPortal } });
   }, [contextSafe]);
 
-  const enterWorld = contextSafe(() => {
-    if (useExperience.getState().phase !== 'idle' || !universeScene.api) return;
-    if (next?.built) {
-      void go(next.id);
-      return;
-    }
-    // The next chapter is not built yet: play the portal dive, then say so honestly.
-    const tl = gsap.timeline();
-    tl.add(fadeOut([welcome.current!, enterBtn.current!], 0.6), 0);
-    tl.add(universeScene.api.diveIntoPortal(), 0);
-    tl.call(() => setComingSoon(true), [], '>-0.3');
-    dive.current = tl;
-  });
+  const enterWorld = () => {
+    if (useExperience.getState().phase !== 'idle' || !next) return;
+    void go(next.id);
+  };
 
   // scroll toward the portal to enter: the camera leans in as the ring fills
   const lean = useRef<number | null>(null);
   const pEnter = useScrollAdvance({
-    enabled: !comingSoon,
+    enabled: true,
     decay: true,
     onProgress: (v) => {
       if (v > 0 && lean.current === null) lean.current = rig.fov;
@@ -79,14 +67,6 @@ export default function UniverseChapter() {
     },
     onComplete: () => enterWorld(),
   });
-
-  const back = () => {
-    setComingSoon(false);
-    const tl = dive.current;
-    if (!tl) return;
-    tl.timeScale(1.6).reverse();
-    dive.current = null;
-  };
 
   return (
     <div ref={root} className="chapter-layer fixed inset-0" data-chapter="universe">
@@ -111,33 +91,6 @@ export default function UniverseChapter() {
       </div>
 
       <ScrollCue ref={enterBtn} p={pEnter} label={`Scroll · ${copy.enterLabel}`} testId="enter-world" className="text-white/75" />
-
-      <AnimatePresence>
-        {comingSoon && (
-          <motion.div
-            className="fixed inset-0 z-30 flex items-center justify-center px-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            data-testid="coming-soon"
-          >
-            <div className="pointer-events-auto w-full max-w-md rounded-3xl border border-lavender/20 bg-[#120a22]/85 px-8 py-10 text-center shadow-[0_30px_120px_rgba(40,10,80,0.55)] backdrop-blur-2xl">
-              <p className="font-grotesk text-[0.62rem] tracking-[0.4em] text-lavender uppercase">
-                Chapter {String(next?.order ?? 3).padStart(2, '0')} · {next?.title}
-              </p>
-              <p className="mt-4 font-serif text-3xl leading-tight text-paper italic">This world is still being painted.</p>
-              <p className="mt-3 font-grotesk text-xs tracking-[0.12em] text-white/55">It arrives in the next build stage.</p>
-              <button
-                onClick={back}
-                className="mt-8 rounded-full border border-lavender/40 px-6 py-3 font-grotesk text-[0.65rem] tracking-[0.3em] text-paper uppercase transition-colors hover:bg-lavender/10"
-                data-testid="back-to-universe"
-              >
-                Return to the universe
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

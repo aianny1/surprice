@@ -86,7 +86,8 @@ async function waitReady(id: ChapterId, timeoutMs: number): Promise<boolean> {
   return ok && handles.has(id);
 }
 
-// ---------------------------------------------------------------- timeline playback & skipping
+// ---------------------------------------------------------------- timeline playback
+// (`skipping` fast-forwards a transition that a browser back/forward interrupts)
 
 let active: { tl: gsap.core.Timeline; finish: () => void } | null = null;
 let skipping = false;
@@ -117,13 +118,6 @@ function wrap(tl: gsap.core.Timeline | null | undefined) {
   const outer = gsap.timeline({ paused: true });
   outer.add(tl);
   return outer;
-}
-
-/** Jump every running and remaining step of the current transition to its end. */
-export function skip() {
-  if (useExperience.getState().phase === 'idle') return;
-  skipping = true;
-  finishActive();
 }
 
 /** Jumps the running timeline to its end. Captures the reference first: progress(1) fires
@@ -161,7 +155,7 @@ export async function go(to: ChapterId) {
   skipping = false;
   const token = ++navToken;
 
-  store.setPhase('exiting', def.id);
+  store.setPhase('exiting');
   const ctx: TransitionCtx = {
     from: from ? getHandles(from) : null,
     to: () => getHandles(to),
@@ -242,7 +236,7 @@ export async function onRouteChanged(to: ChapterId, kind: 'initial' | 'history')
     overlay.coverDarkInstant();
   }
   const def = kind === 'initial' ? TRANSITIONS.coldOpen : TRANSITIONS.rewind;
-  store.setPhase('awaitingReady', def.id);
+  store.setPhase('awaitingReady');
   pending = { to };
 
   if (kind === 'initial' && needsGate(to)) {

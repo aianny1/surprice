@@ -312,12 +312,11 @@ export function sampleTextPoints(text: string, cssFontVar: string, opts: { weigh
   const { weight = '400', maxPoints = 9000 } = opts;
   const family = fontFamily(cssFontVar, 'Georgia, serif');
   const fontPx = 200;
-  const [m, mx] = canvas(10, 10);
+  const [, mx] = canvas(10, 10);
   mx.font = `${weight} ${fontPx}px ${family}`;
   const width = Math.ceil(mx.measureText(text).width) + 40;
-  void m;
   const height = Math.ceil(fontPx * 1.35);
-  const [c, ctx] = canvas(width, height);
+  const [, ctx] = canvas(width, height);
   ctx.fillStyle = '#fff';
   ctx.textBaseline = 'middle';
   ctx.font = `${weight} ${fontPx}px ${family}`;

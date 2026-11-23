@@ -1,13 +1,10 @@
 'use client';
 
-import { lazy, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { lazy, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { gsap, useGSAP } from '@/animation/gsap';
 import { fadeOut, maskLines, wordStagger } from '@/animation/text';
-import { overlay } from '@/engine/transition/overlay';
 import { SceneIn } from '@/engine/stage/tunnel';
-import { CinematicButton } from '@/engine/ui/CinematicButton';
 import { go, registerHandles } from '@/engine/transition/manager';
 import { nextChapter } from '@/engine/chapters';
 import type { EnterMode } from '@/engine/transition/transitions';
@@ -35,10 +32,6 @@ export default function NatureChapter() {
   const phase = useExperience((s) => s.phase);
   const opened = useSeeds((s) => s.opened);
   const showing = useSeeds((s) => s.showing);
-  const [comingSoon, setComingSoon] = useState(false);
-  // the coming-soon card must sit above the transition overlays, so it renders into <body>
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
   const next = nextChapter('nature');
   const { contextSafe } = useGSAP({ scope: root });
 
@@ -197,29 +190,6 @@ export default function NatureChapter() {
     lastStop && allRead ? 'Scroll to follow the butterfly' : stop === 0 ? 'Scroll to walk in' : seed >= 0 && !opened[seed] ? 'A light is waking up…' : 'Scroll to keep walking';
   const card = showing !== null ? nature.stops[showing] : null;
 
-  const preview = useRef<gsap.core.Timeline | null>(null);
-  const follow = () => {
-    if (useExperience.getState().phase !== 'idle' || preview.current) return;
-    useSeeds.getState().close();
-    if (next?.built) {
-      void go(next.id);
-      return;
-    }
-    // Travel isn't built yet: play the butterfly → sky, then say so; "Stay" plays it backwards
-    const tl = gsap.timeline();
-    tl.add(fadeOut(root.current!.querySelectorAll('[data-ui]'), 0.5), 0);
-    if (natureScene.api) tl.add(natureScene.api.followButterfly(), 0);
-    tl.add(overlay.skyIn(0.6), 3.0);
-    tl.call(() => setComingSoon(true));
-    preview.current = tl;
-  };
-  const stay = () => {
-    setComingSoon(false);
-    const tl = preview.current;
-    preview.current = null;
-    if (tl) tl.timeScale(1.8).reverse();
-  };
-
   return (
     <div ref={root} className="chapter-layer fixed inset-0" data-chapter="nature" data-stop={stop}>
       <SceneIn id="nature">
@@ -242,7 +212,6 @@ export default function NatureChapter() {
           {nature.heading.charAt(0) + nature.heading.slice(1).toLowerCase()}
         </h1>
       </header>
-
 
       <AnimatePresence>
         {card && (
@@ -295,36 +264,6 @@ export default function NatureChapter() {
         </span>
       </div>
 
-      {mounted &&
-        createPortal(
-          <AnimatePresence>
-            {comingSoon && (
-              <motion.div
-                // portalled to <body> and above the transition overlays (z-50): it sits on the butterfly's sky
-                className="fixed inset-0 z-[75] flex items-center justify-center px-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                data-testid="nature-coming-soon"
-              >
-                <div className="pointer-events-auto w-full max-w-md rounded-3xl border border-white/20 bg-[#1d1418]/80 px-8 py-10 text-center backdrop-blur-2xl">
-                  <p className="font-grotesk text-[0.62rem] tracking-[0.4em] text-[#f2c3a0] uppercase">
-                    Chapter {String(next?.order ?? 4).padStart(2, '0')} · {next?.title}
-                  </p>
-                  <p className="mt-4 font-serif text-3xl leading-tight text-[#fff4e8] italic">This world is still being painted.</p>
-                  <p className="mt-3 font-grotesk text-xs tracking-[0.12em] text-white/55">It arrives in the next build stage.</p>
-                  <button
-                    onClick={stay}
-                    className="mt-8 rounded-full border border-white/30 px-6 py-3 font-grotesk text-[0.65rem] tracking-[0.3em] text-[#fff4e8] uppercase hover:bg-white/10"
-                  >
-                    Stay for the sunset
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
     </div>
   );
 }

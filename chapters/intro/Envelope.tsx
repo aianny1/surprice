@@ -257,7 +257,7 @@ export const Envelope = forwardRef<EnvelopeRefs, { onHover?(h: boolean): void; o
       innerLight: innerLight.current,
     }));
 
-    const { W, H, FLAP } = ENV;
+    const { H, FLAP } = ENV;
     const P = LETTER.PANEL;
     // Box material order: +x, -x, +y, -y, +z (inside, liner), -z (outside)
     const backMats = [assets.paperMat, assets.paperMat, assets.paperMat, assets.paperMat, assets.linerMat, assets.paperMat];
