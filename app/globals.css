@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-serif: var(--font-cormorant-src), Georgia, serif;
+  --font-display: var(--font-bodoni-src), Georgia, serif;
+  --font-grotesk: var(--font-grotesk-src), system-ui, sans-serif;
+  --font-sans: var(--font-inter-src), system-ui, sans-serif;
+}
+
+/* Colour system — ANIMATION_SYSTEM.md §5 */
+@theme {
+  --color-midnight: #07060b;
+  --color-void: #000000;
+  --color-deep: #1a0b2e;
+  --color-violet: #5b2a9e;
+  --color-lavender: #c9b6ff;
+  --color-glow: #e4daff;
+  --color-blush: #f4b6d2;
+  --color-silver: #c8ccd6;
+  --color-silver-dim: #6e7280;
+  --color-paper: #f5f1ea;
+  --color-ember: #ffc98a;
+}
+
+@keyframes load {
+  0% { transform: scaleX(0); transform-origin: left; }
+  50% { transform: scaleX(1); transform-origin: left; }
+  50.01% { transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+
+html,
+body {
+  background: var(--color-void);
+  color: var(--color-paper);
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-lavender) 40%, transparent);
+}
+
+:focus-visible {
+  outline: 1px solid var(--color-lavender);
+  outline-offset: 4px;
+}
+
+/* Chapter DOM sits above the canvas but lets pointer events through except on interactive bits. */
+.chapter-layer {
+  pointer-events: none;
+}
+.chapter-layer :is(button, a, [data-interactive]) {
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Tailwind v4 resets buttons to the default arrow: give every clickable thing the hand cursor */
+button:not(:disabled),
+[role='button'],
+a[href],
+summary,
+label[for],
+select {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+
+@keyframes scrollcue {
+  0% { transform: translate(-50%, 0); opacity: 1; }
+  70% { transform: translate(-50%, 10px); opacity: 0; }
+  100% { transform: translate(-50%, 0); opacity: 0; }
+}
+
+/* The site has no native page scroll: every swipe is ours. With no native pan the browser treats
+   the end of a swipe as a user gesture, which is what lets the music start on a phone without a tap. */
+html,
+body {
+  touch-action: none;
+}
+.overflow-y-auto,
+.overflow-auto {
+  touch-action: pan-y;
+}
