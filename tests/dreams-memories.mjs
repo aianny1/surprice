@@ -1,4 +1,4 @@
-/** Dreams: scroll lights wishes one by one. Memories: scroll lifts each photo up and back. */
+﻿/** Dreams: scroll lights wishes one by one. Memories: scroll lifts each photo up and back. */
 import { chromium } from 'playwright-core';
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -19,7 +19,7 @@ await hop(); await sleep(1200);
 await page.screenshot({ path: 'tests/screens/dm-dreams-3.png' });
 await hop(); await sleep(2500);
 await page.screenshot({ path: 'tests/screens/dm-dreams-4.png' });
-console.log('music hint shown:', !!(await page.$('[data-testid="music-hint"]')));
+console.log('play-music button shown:', !!(await page.$('[data-testid="play-music"]')));
 await page.goto(`${BASE}/memories?preview=1`);
 await sleep(7000);
 await hop(); await sleep(600);

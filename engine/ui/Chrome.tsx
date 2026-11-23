@@ -26,9 +26,48 @@ export function Chrome() {
     return () => clearInterval(id);
   }, [live]);
 
+  const startMusic = () => {
+    sfx.unlock();
+    music.start();
+    setSound(true);
+    setLive(sfx.context?.state === 'running');
+  };
+
   return (
     <>
     <ScrollBack />
+    {/* big, obvious "play music" button while the browser still has audio locked */}
+    <AnimatePresence>
+      {sound && !live && visible && (
+        <motion.div
+          key="play-music"
+          className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))]"
+          initial={{ opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.5, duration: 0.6 } }}
+          exit={{ opacity: 0, y: -14, transition: { duration: 0.4 } }}
+        >
+          <motion.button
+            className="pointer-events-auto flex items-center gap-2.5 rounded-full border border-[#ffd9a8]/70 bg-black/60 px-6 py-2.5 font-grotesk text-xs font-medium tracking-[0.25em] text-[#ffd9a8] uppercase backdrop-blur-md sm:px-7 sm:py-3 sm:text-sm"
+            animate={{
+              boxShadow: [
+                '0 0 10px rgba(255,217,168,0.25)',
+                '0 0 32px rgba(255,217,168,0.65)',
+                '0 0 10px rgba(255,217,168,0.25)',
+              ],
+            }}
+            transition={{ duration: 2.2, repeat: Infinity }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={startMusic}
+            aria-label="Play music"
+            data-testid="play-music"
+          >
+            <span aria-hidden className="text-base leading-none sm:text-lg">♪</span>
+            Play music
+          </motion.button>
+        </motion.div>
+      )}
+    </AnimatePresence>
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex items-end justify-between p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
       <AnimatePresence mode="wait">
         {visible && chapter && (
@@ -53,22 +92,11 @@ export function Chrome() {
       </AnimatePresence>
 
       <div className="flex items-center gap-1">
-      <AnimatePresence>
-        {sound && !live && visible && (
-          <motion.span
-            className="pointer-events-none font-grotesk text-[0.55rem] tracking-[0.3em] text-[#ffd9a8]/80 uppercase"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.35, 1, 0.35], transition: { duration: 2.4, repeat: Infinity } }}
-            exit={{ opacity: 0 }}
-            data-testid="music-hint"
-          >
-            ♪ Tap anywhere for music
-          </motion.span>
-        )}
-      </AnimatePresence>
       <motion.button
         className="pointer-events-auto flex items-center gap-2 rounded-full px-3 py-2 font-grotesk text-[0.6rem] tracking-[0.3em] text-white/50 uppercase hover:text-white sm:text-[0.65rem]"
         onClick={() => {
+          // audio still locked: this tap should start the music, not mute it
+          if (sound && !live) return startMusic();
           sfx.unlock();
           music.start();
           setSound(!sound);
