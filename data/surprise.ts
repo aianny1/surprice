@@ -1,6 +1,8 @@
 /** Chapter 09 · the finale. Only this chapter may say it out loud. Edit the message freely. */
 export const surprise = {
   pageTitle: 'Happy Birthday, Megha!',
+  /** Shown beside the message after the gift opens (may say birthday: this is the finale). */
+  photo: '/images/surprise/megha-birthday.webp' as string | null,
   lines: ['ONE LAST THING...', 'THIS MOMENT IS ALL YOURS.'],
   openLabel: 'OPEN IT',
   wish: 'HAPPY BIRTHDAY, MEGHA!',

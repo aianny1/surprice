@@ -25,6 +25,7 @@ export default function SurpriseChapter() {
   const wishWrap = useRef<HTMLDivElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const msg = useRef<HTMLDivElement>(null);
+  const photo = useRef<HTMLDivElement>(null);
   const wishBtn = useRef<HTMLDivElement>(null);
   const finale = useRef<HTMLParagraphElement>(null);
   const [step, setStep] = useState<Step>('intro');
@@ -79,6 +80,7 @@ export default function SurpriseChapter() {
     tl.set(wishWrap.current, { autoAlpha: 1 }, '<');
     tl.add(charReveal(title.current!, { reduced, duration: 1.2 }), '<');
     tl.fromTo(msg.current!.children, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.5 }, '>-0.3');
+    if (photo.current) tl.fromTo(photo.current, { autoAlpha: 0, x: -60, rotate: -14 }, { autoAlpha: 1, x: 0, rotate: -5, duration: 1.2, ease: 'power3.out' }, '<');
     tl.fromTo(wishBtn.current, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.8 }, '>');
     // give her time to read the message before scrolling can blow the candles out
     tl.call(() => setReady((r) => ({ ...r, wish: true })), [], '+=2.5');
@@ -131,6 +133,18 @@ export default function SurpriseChapter() {
       </div>
       <ScrollCue ref={openBtn} p={pOpen} label={`Scroll · ${surprise.openLabel}`} testId="surprise-open" className={step === 'intro' ? '' : 'hidden'} />
 
+      {/* her photo, pinned beside the cake once the gift is open (wide screens only) */}
+      {surprise.photo && (
+        <div
+          ref={photo}
+          data-testid="surprise-photo"
+          className="pointer-events-none invisible absolute top-[34vh] left-[5vw] hidden w-[min(15rem,18vw)] bg-[#fbf7f0] p-2.5 pb-8 shadow-[0_30px_80px_rgba(0,0,0,0.6)] lg:block"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={surprise.photo} alt="Megha" className="aspect-[9/16] w-full object-cover" />
+          <p className="mt-2 text-center font-serif text-sm text-[#2b1f22] italic">the birthday girl ♡</p>
+        </div>
+      )}
       <div ref={wishWrap} className="invisible absolute inset-x-0 top-[6vh] flex flex-col items-center px-5 text-center" data-testid="surprise-wish">
         <h1 ref={title} className="font-serif text-[clamp(2rem,6vw,4.6rem)] leading-none text-[#ffe7c7] drop-shadow-[0_0_24px_rgba(255,190,130,0.45)]">
           {surprise.wish}

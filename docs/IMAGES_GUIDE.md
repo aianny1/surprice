@@ -12,7 +12,7 @@ Example: file `public/images/memories/1.jpg` hai, to path likhoge `'/images/memo
 
 ## 1. Memories (sabse zaroori)
 
-Abhi yahan "Photo #1 goes here" jaise placeholders hain, jo live site par bhi dikhenge.
+Abhi yahan Megha ki 2 photos lagi hain (`megha-smile.webp`, `megha-flowers.webp`). Aur photos jodni ho to neeche jaisa ek naya item jodo.
 
 - **Folder:** `public/images/memories/` (folder na ho to bana lo)
 - **File:** [data/memories.ts](../data/memories.ts)
@@ -38,7 +38,7 @@ Abhi yahan "Photo #1 goes here" jaise placeholders hain, jo live site par bhi di
 portrait: '/images/artist/megha.jpg' as string | null,
 ```
 
-**Size:** lambi (portrait) photo, 4:5, lagbhag 800×1000 px. Photo na ho to "M" wala design dikhta rehta hai.
+**Size:** lambi (portrait) photo, 4:5, lagbhag 800×1000 px. Abhi `/images/artist/megha.webp` lagi hai.
 
 ---
 
@@ -100,6 +100,14 @@ Dhyaan rahe: yahi photos Film page ki reel aur Dreams ke cards me bhi dikhti hai
 style: 'photo',
 photos: ['/images/dreams/family.jpg'],
 ```
+
+---
+
+## 7. Surprise: aakhri page ki photo
+
+- **File:** [data/surprise.ts](../data/surprise.ts), field `photo`.
+- Abhi "Happy Birthday Meghaaa" wali photo lagi hai (`/images/surprise/megha-birthday.webp`). Ye gift khulne ke baad cake ke bagal me polaroid ki tarah aati hai, sirf laptop/badi screen par.
+- **Dhyaan:** jis photo par "birthday" likha ho, use **sirf yahin** lagana. Baaki pages par lagane se surprise pehle hi khul jaayega.
 
 ---
 

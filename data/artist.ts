@@ -1,7 +1,7 @@
 /** Chapter 05 · The Artist. `portrait`: set e.g. '/images/artist/megha.jpg' when you have a photo. */
 export const artist = {
   heading: 'SOME PEOPLE SEE THE WORLD. SOME PEOPLE CREATE THEIR OWN.',
-  portrait: null as string | null,
+  portrait: '/images/artist/megha.webp' as string | null,
   lines: [
     'Give her an empty viewport and twenty minutes later there is a whole world in it.',
     'She notices the light first. Then the colour. Then the one frame everybody else missed.',
