@@ -90,6 +90,18 @@ export function ChapterShell({
     return registerHandles(id, { enter, exits });
   }, [contextSafe, id]);
 
+  // a cue that was hidden mid-chapter (Travel's film) mounts again after the entrance has played,
+  // so it has to fade itself in
+  const entered = useRef(false);
+  useEffect(() => {
+    if (hideCue) return;
+    if (!entered.current) {
+      entered.current = true;
+      return;
+    }
+    if (btn.current) gsap.fromTo(btn.current, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.9, ease: 'power3.out' });
+  }, [hideCue]);
+
   const ink = tone === 'light' ? 'text-[#fff4e8]' : 'text-[#2b1f22]';
   const proceed = () => {
     if (onCta) onCta();

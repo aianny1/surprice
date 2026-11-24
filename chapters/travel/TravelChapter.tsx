@@ -12,8 +12,8 @@ import { travelScene, useTravel } from './state';
 
 const TravelScene = lazy(() => import('./TravelScene'));
 /** The film: how long each place stays on screen, and the pause before the first flight. */
-const AUTO_HOP_MS = 5200;
-const AUTO_START_DELAY_MS = 3500;
+const AUTO_HOP_MS = 2000; // ~0.5 s for the postcard to land + 1.5 s with the photo fully on screen
+const AUTO_START_DELAY_MS = 1500;
 const list = travel.destinations.map((x, i) => ({ ...x, i }));
 
 function timecode(ms: number) {
@@ -129,8 +129,8 @@ export default function TravelChapter() {
             data-testid="travel-postcard"
             className="pointer-events-auto absolute top-[24vh] right-6 w-[min(23rem,calc(100vw-3rem))] rounded-sm bg-[#fbf6ee] p-3 text-[#2b1f22] shadow-[0_30px_80px_rgba(0,0,0,0.55)] sm:top-[27vh] sm:right-[5vw]"
             initial={{ opacity: 0, x: 60, rotate: 7, scale: 0.92 }}
-            animate={{ opacity: 1, x: 0, rotate: 1.5, scale: 1, transition: { delay: 1.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] } }}
-            exit={{ opacity: 0, x: -40, rotate: -4, transition: { duration: 0.35 } }}
+            animate={{ opacity: 1, x: 0, rotate: 1.5, scale: 1, transition: { delay: 0.15, duration: 0.35, ease: [0.22, 1, 0.36, 1] } }}
+            exit={{ opacity: 0, x: -40, rotate: -4, transition: { duration: 0.15 } }}
           >
             <div className="relative aspect-[3/2] overflow-hidden rounded-sm bg-[linear-gradient(160deg,#9fc3e6,#e9eef3_55%,#7d8f84)]">
               {d.photo && (

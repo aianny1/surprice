@@ -125,10 +125,10 @@ export default function TravelScene() {
     const d = travel.destinations[selected];
     const reduced = useExperience.getState().reducedMotion;
     const tl = gsap.timeline();
-    tl.fromTo(f, { p: 0 }, { p: 1, duration: reduced ? 0.01 : 2.6, ease: 'power2.inOut' }, 0);
+    tl.fromTo(f, { p: 0 }, { p: 1, duration: reduced ? 0.01 : 1.0, ease: 'power2.inOut' }, 0);
     // a little film shot per place: pull back for the flight, glide over, settle in close,
     // then a slow dolly and pan while she reads the postcard
-    const k = reduced ? 0.01 : 1;
+    const k = reduced ? 0.01 : 0.42; // brisk pace: ~2 s per place
     tl.to(orbit, { dist: 6.4, duration: 1.0 * k, ease: 'power2.out' }, 0);
     tl.to(orbit, { lat: d.lat - 4, lng: d.lng, duration: 2.2 * k, ease: 'power2.inOut' }, 0);
     tl.to(orbit, { dist: 4.6, duration: 1.4 * k, ease: 'power2.inOut' }, 1.1 * k);
