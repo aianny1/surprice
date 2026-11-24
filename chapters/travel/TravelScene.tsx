@@ -126,7 +126,13 @@ export default function TravelScene() {
     const reduced = useExperience.getState().reducedMotion;
     const tl = gsap.timeline();
     tl.fromTo(f, { p: 0 }, { p: 1, duration: reduced ? 0.01 : 2.6, ease: 'power2.inOut' }, 0);
-    tl.to(orbit, { lat: d.lat - 4, lng: d.lng, dist: 5, duration: reduced ? 0.01 : 2.2, ease: 'power2.inOut' }, 0);
+    // a little film shot per place: pull back for the flight, glide over, settle in close,
+    // then a slow dolly and pan while she reads the postcard
+    const k = reduced ? 0.01 : 1;
+    tl.to(orbit, { dist: 6.4, duration: 1.0 * k, ease: 'power2.out' }, 0);
+    tl.to(orbit, { lat: d.lat - 4, lng: d.lng, duration: 2.2 * k, ease: 'power2.inOut' }, 0);
+    tl.to(orbit, { dist: 4.6, duration: 1.4 * k, ease: 'power2.inOut' }, 1.1 * k);
+    tl.to(orbit, { dist: 3.9, lng: d.lng + 3, lat: d.lat - 2.5, duration: 4.5 * k, ease: 'sine.inOut' }, 2.5 * k);
     return () => {
       tl.kill();
     };
@@ -189,7 +195,6 @@ export default function TravelScene() {
     };
   }, []);
 
-  const filter = useTravel((s) => s.filter);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
@@ -209,11 +214,9 @@ export default function TravelScene() {
     }
     if (cloudRef.current) cloudRef.current.rotation.y += dt * 0.006;
 
-    // markers pulse; filtered-out ones dim
+    // markers pulse; the current one is bigger
     markers.current?.children.forEach((m, i) => {
-      const d = travel.destinations[i];
-      const on = !filter || d.category === filter;
-      const s = (on ? 1 : 0.45) * (1 + Math.sin(t * 3 + i) * 0.18) * (useTravel.getState().selected === i ? 1.7 : 1);
+      const s = (1 + Math.sin(t * 3 + i) * 0.18) * (useTravel.getState().selected === i ? 1.7 : 1);
       m.scale.setScalar(s * Math.min(1, orbit.dist / 6));
     });
 

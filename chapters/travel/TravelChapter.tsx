@@ -1,79 +1,64 @@
 'use client';
 
-import { lazy, useEffect, useRef } from 'react';
+import { lazy, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { gsap } from '@/animation/gsap';
-import { ChapterShell, Pill } from '@/engine/ui/ChapterShell';
-import { backGate, useScrollDelta } from '@/engine/ui/ScrollAdvance';
+import { ChapterShell } from '@/engine/ui/ChapterShell';
+import { useBackGate } from '@/engine/ui/ScrollAdvance';
 import { sfx } from '@/engine/audio/AudioManager';
-import { travel, type TravelCategory } from '@/data/travel';
+import { travel } from '@/data/travel';
 import { useExperience } from '@/store/experience';
 import { travelScene, useTravel } from './state';
 
 const TravelScene = lazy(() => import('./TravelScene'));
-const CATS = [...new Set(travel.destinations.map((d) => d.category))] as TravelCategory[];
-/** Scroll needed for one hop, and the rest between hops (the flight itself takes ~2.5 s). */
-const STEP_PX = 180;
-const STEP_REST_MS = 1300;
-/** Auto-play: time each postcard stays up, and the pause before the first flight. */
+/** The film: how long each place stays on screen, and the pause before the first flight. */
 const AUTO_HOP_MS = 5200;
 const AUTO_START_DELAY_MS = 3500;
+const list = travel.destinations.map((x, i) => ({ ...x, i }));
 
-/** Chapter 04 · The Wanderer: scrolling flies her from place to place. */
+function timecode(ms: number) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const f = Math.floor((ms % 1000) / 41.7);
+  return `00:${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}:${String(f).padStart(2, '0')}`;
+}
+
+/**
+ * Chapter 04 · The Wanderer, played like a short travel film: letterbox, a progress bar per place,
+ * and the plane flying from place to place on its own. Scroll only takes off once the film ends.
+ */
 export default function TravelChapter() {
-  const { selected, filter, dreams, select, setFilter, toggleDream } = useTravel();
+  const { selected, dreams, toggleDream } = useTravel();
   const d = selected != null ? travel.destinations[selected] : null;
-  const list = travel.destinations.map((x, i) => ({ ...x, i })).filter((x) => !filter || x.category === filter);
   const pos = selected == null ? -1 : list.findIndex((x) => x.i === selected);
   const atLast = pos === list.length - 1;
 
-  // scroll steps through the (filtered) places one by one
-  const acc = useRef(0);
   const lastStep = useRef(0);
-  const hop = (dir: number) => {
-    const st = useTravel.getState();
-    const l = travel.destinations.map((x, i) => ({ ...x, i })).filter((x) => !st.filter || x.category === st.filter);
-    const cur = st.selected == null ? -1 : l.findIndex((x) => x.i === st.selected);
-    if (dir > 0 && cur === l.length - 1) return false; // the last place hands over to TAKE OFF
-    if (dir < 0 && cur === -1) return false; // the overview hands over to scroll-back
-    lastStep.current = performance.now();
-    const next = cur + dir;
-    st.select(next < 0 ? null : l[Math.min(next, l.length - 1)].i);
-    sfx.play('whoosh');
-    return true;
-  };
-  useScrollDelta((px) => {
-    acc.current += px;
-    if (performance.now() - lastStep.current < STEP_REST_MS || Math.abs(acc.current) < STEP_PX) return;
-    const dir = Math.sign(acc.current);
-    acc.current = 0;
-    hop(dir);
-  });
-
-  // the journey also plays by itself: a new place every few seconds until the last one;
-  // scrolling still skips ahead or back, and resets the timer
+  const started = useRef(0);
+  const [clock, setClock] = useState(0);
   useEffect(() => {
-    lastStep.current = performance.now() + AUTO_START_DELAY_MS - AUTO_HOP_MS;
-    const id = setInterval(() => {
-      // while a transition plays, hold the clock so the first flight waits for the arrival to finish
-      if (useExperience.getState().phase !== 'idle') {
-        lastStep.current = performance.now() + AUTO_START_DELAY_MS - AUTO_HOP_MS;
-        return;
-      }
-      if (performance.now() - lastStep.current >= AUTO_HOP_MS) hop(1);
-    }, 300);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // scroll-back to Nature only from the globe overview
-  useEffect(() => {
-    const gate = () => useTravel.getState().selected == null;
-    backGate.fn = gate;
-    return () => {
-      if (backGate.fn === gate) backGate.fn = null;
+    const reset = () => {
+      lastStep.current = performance.now() + AUTO_START_DELAY_MS - AUTO_HOP_MS;
+      started.current = 0;
     };
+    reset();
+    const id = setInterval(() => {
+      // while a transition plays, hold the film so the first flight waits for the arrival
+      if (useExperience.getState().phase !== 'idle') return reset();
+      const now = performance.now();
+      if (started.current) setClock(now - started.current);
+      const st = useTravel.getState();
+      const cur = st.selected == null ? -1 : list.findIndex((x) => x.i === st.selected);
+      if (cur >= list.length - 1 || now - lastStep.current < AUTO_HOP_MS) return;
+      if (!started.current) started.current = now;
+      lastStep.current = now;
+      st.select(list[cur + 1].i);
+      sfx.play('whoosh');
+    }, 120);
+    return () => clearInterval(id);
   }, []);
+
+  // scroll-back to Nature only before the film starts
+  useBackGate(() => useTravel.getState().selected == null);
 
   return (
     <ChapterShell
@@ -82,33 +67,58 @@ export default function TravelChapter() {
       heading={travel.heading}
       cta={travel.continueLabel}
       canAdvance={atLast}
-      cueLabel={atLast ? undefined : pos < 0 ? 'The journey is about to begin…' : `Flying on… ${pos + 1} / ${list.length} · scroll to skip`}
+      cueLabel={atLast ? undefined : 'The film is about to begin…'}
+      hideCue={pos >= 0 && !atLast}
       onEnter={(m) => travelScene.api?.arrive(m)}
       exits={{ takeOff: () => travelScene.api?.takeOff() ?? gsap.timeline() }}
     >
-      <div data-ui className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+8.5rem)] flex flex-col items-center gap-3 px-4 sm:bottom-[16vh]">
-        <div data-reveal className="flex flex-wrap justify-center gap-2">
-          <Pill active={!filter} onClick={() => setFilter(null)}>All</Pill>
-          {CATS.map((c) => (
-            <Pill key={c} active={filter === c} onClick={() => setFilter(filter === c ? null : c)}>{c}</Pill>
-          ))}
-        </div>
-        <ul data-reveal className="flex max-w-3xl flex-wrap justify-center gap-x-4 gap-y-1" aria-label="Places">
-          {list.map((x) => (
-            <li key={x.id}>
-              <button
-                type="button"
-                onClick={() => select(x.i)}
-                data-testid={`place-${x.id}`}
-                className={`pointer-events-auto font-serif text-sm italic transition-opacity ${selected === x.i ? 'opacity-100 underline' : 'opacity-60 hover:opacity-100'}`}
-              >
-                {x.name}
-                {dreams.includes(x.id) && ' ♥'}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* cinema letterbox */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[7vh] bg-black"
+        initial={{ y: '-100%' }}
+        animate={{ y: pos >= 0 ? '0%' : '-100%', transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] } }}
+      />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[13vh] bg-black"
+        initial={{ y: '100%' }}
+        animate={{ y: pos >= 0 ? '0%' : '100%', transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] } }}
+      />
+
+      {/* the film's timeline: one segment per place, the current one filling as it plays */}
+      <AnimatePresence>
+        {pos >= 0 && !atLast && (
+          <motion.div
+            data-ui
+            data-testid="travel-timeline"
+            className="pointer-events-none absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.6vh)] mx-auto flex w-[min(44rem,calc(100vw-2.5rem))] flex-col gap-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0, transition: { delay: 0.6, duration: 0.8 } }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="flex gap-1">
+              {list.map((x, k) => (
+                <span key={x.id} className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-white/15">
+                  {k < pos && <span className="absolute inset-0 bg-[#ffd9a8]" />}
+                  {k === pos && (
+                    <motion.span
+                      key={pos}
+                      className="absolute inset-y-0 left-0 bg-[#ffd9a8]"
+                      initial={{ width: '0%' }}
+                      animate={{ width: '100%', transition: { duration: AUTO_HOP_MS / 1000, ease: 'linear' } }}
+                    />
+                  )}
+                </span>
+              ))}
+            </div>
+            <div className="flex justify-between font-mono text-[0.6rem] tracking-[0.15em] text-white/60">
+              <span><span className="text-red-400">●</span> THE WANDERER · {String(pos + 1).padStart(2, '0')}/{String(list.length).padStart(2, '0')}</span>
+              <span>{timecode(clock)}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {d && (
@@ -152,16 +162,9 @@ export default function TravelChapter() {
               </button>
             </div>
             {d.credit && <p className="mt-2 truncate font-grotesk text-[0.45rem] tracking-[0.08em] opacity-45" title={d.credit}>{d.credit}</p>}
-            <button type="button" onClick={() => select(null)} aria-label="Close postcard" className="absolute -top-3 -right-3 h-8 w-8 rounded-full bg-[#2b1f22] text-[#fbf6ee]">
-              ×
-            </button>
           </motion.article>
         )}
       </AnimatePresence>
-
-      <p data-ui data-reveal className="pointer-events-none absolute top-[31vh] inset-x-0 text-center font-grotesk text-[0.55rem] tracking-[0.35em] uppercase opacity-50">
-        {selected == null ? `${list.length} places, one after another · drag to spin` : `${dreams.length} in her dream list`}
-      </p>
     </ChapterShell>
   );
 }

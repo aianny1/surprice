@@ -31,6 +31,7 @@ export function ChapterShell({
   headingClass = '',
   canAdvance = true,
   cueLabel,
+  hideCue = false,
 }: {
   id: ChapterId;
   scene?: ReactNode;
@@ -47,6 +48,8 @@ export function ChapterShell({
   canAdvance?: boolean;
   /** Overrides the scroll hint text (e.g. while the chapter steps through its own content). */
   cueLabel?: string;
+  /** Hide the scroll hint entirely (e.g. while Travel plays its film). */
+  hideCue?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const eyebrow = useRef<HTMLParagraphElement>(null);
@@ -129,7 +132,7 @@ export function ChapterShell({
         </h1>
       </header>
       {children}
-      {cta && (next || onCta) && <ScrollCue ref={btn} p={p} label={cueLabel ?? `Scroll · ${cta}`} testId={`${id}-continue`} />}
+      {cta && (next || onCta) && !hideCue && <ScrollCue ref={btn} p={p} label={cueLabel ?? `Scroll · ${cta}`} testId={`${id}-continue`} />}
     </div>
   );
 }

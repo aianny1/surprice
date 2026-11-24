@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import * as THREE from 'three';
-import type { TravelCategory } from '@/data/travel';
 
 export const GLOBE_R = 2;
 
@@ -22,19 +21,15 @@ function loadDreams(): string[] {
 
 export const useTravel = create<{
   selected: number | null;
-  filter: TravelCategory | null;
   dreams: string[];
   select(i: number | null): void;
-  setFilter(c: TravelCategory | null): void;
   toggleDream(id: string): void;
   init(): void;
 }>((set, get) => ({
   selected: null,
-  filter: null,
   dreams: [],
   select: (selected) => set({ selected }),
-  setFilter: (filter) => set({ filter }),
-  init: () => set({ selected: null, filter: null, dreams: loadDreams() }),
+  init: () => set({ selected: null, dreams: loadDreams() }),
   toggleDream: (id) => {
     const d = get().dreams;
     const dreams = d.includes(id) ? d.filter((x) => x !== id) : [...d, id];

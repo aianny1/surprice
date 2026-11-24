@@ -45,9 +45,13 @@ async function open(route) {
 
 await open('travel');
 await shot('travel');
-await page.click('[data-testid="place-gulmarg"]', { force: true });
-await sleep(4500);
+// the travel film plays by itself (no scrolling); scroll only takes off once the last place is up
+await sleep(6000);
 await shot('travel-postcard');
+const early = await page.evaluate(() => { window.dispatchEvent(new WheelEvent('wheel', { deltaY: 2000 })); return location.pathname; });
+await page.waitForFunction(() => document.querySelector('[data-testid="travel-postcard"] h2')?.textContent === 'Rishikesh', null, { timeout: 90000 });
+console.log('film reached the last place; still on', early);
+await shot('travel-film-end');
 await scrollUntil(() => location.pathname === '/artist');
 await sleep(5000);
 await shot('artist-from-t4');
