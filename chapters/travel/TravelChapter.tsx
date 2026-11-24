@@ -7,6 +7,7 @@ import { ChapterShell, Pill } from '@/engine/ui/ChapterShell';
 import { backGate, useScrollDelta } from '@/engine/ui/ScrollAdvance';
 import { sfx } from '@/engine/audio/AudioManager';
 import { travel, type TravelCategory } from '@/data/travel';
+import { useExperience } from '@/store/experience';
 import { travelScene, useTravel } from './state';
 
 const TravelScene = lazy(() => import('./TravelScene'));
@@ -14,6 +15,9 @@ const CATS = [...new Set(travel.destinations.map((d) => d.category))] as TravelC
 /** Scroll needed for one hop, and the rest between hops (the flight itself takes ~2.5 s). */
 const STEP_PX = 180;
 const STEP_REST_MS = 1300;
+/** Auto-play: time each postcard stays up, and the pause before the first flight. */
+const AUTO_HOP_MS = 5200;
+const AUTO_START_DELAY_MS = 3500;
 
 /** Chapter 04 · The Wanderer: scrolling flies her from place to place. */
 export default function TravelChapter() {
@@ -26,21 +30,41 @@ export default function TravelChapter() {
   // scroll steps through the (filtered) places one by one
   const acc = useRef(0);
   const lastStep = useRef(0);
-  useScrollDelta((px) => {
+  const hop = (dir: number) => {
     const st = useTravel.getState();
     const l = travel.destinations.map((x, i) => ({ ...x, i })).filter((x) => !st.filter || x.category === st.filter);
     const cur = st.selected == null ? -1 : l.findIndex((x) => x.i === st.selected);
-    if (px > 0 && cur === l.length - 1) return; // the last place hands over to TAKE OFF
-    if (px < 0 && cur === -1) return; // the overview hands over to scroll-back
-    acc.current += px;
-    if (performance.now() - lastStep.current < STEP_REST_MS || Math.abs(acc.current) < STEP_PX) return;
-    const dir = Math.sign(acc.current);
-    acc.current = 0;
+    if (dir > 0 && cur === l.length - 1) return false; // the last place hands over to TAKE OFF
+    if (dir < 0 && cur === -1) return false; // the overview hands over to scroll-back
     lastStep.current = performance.now();
     const next = cur + dir;
     st.select(next < 0 ? null : l[Math.min(next, l.length - 1)].i);
     sfx.play('whoosh');
+    return true;
+  };
+  useScrollDelta((px) => {
+    acc.current += px;
+    if (performance.now() - lastStep.current < STEP_REST_MS || Math.abs(acc.current) < STEP_PX) return;
+    const dir = Math.sign(acc.current);
+    acc.current = 0;
+    hop(dir);
   });
+
+  // the journey also plays by itself: a new place every few seconds until the last one;
+  // scrolling still skips ahead or back, and resets the timer
+  useEffect(() => {
+    lastStep.current = performance.now() + AUTO_START_DELAY_MS - AUTO_HOP_MS;
+    const id = setInterval(() => {
+      // while a transition plays, hold the clock so the first flight waits for the arrival to finish
+      if (useExperience.getState().phase !== 'idle') {
+        lastStep.current = performance.now() + AUTO_START_DELAY_MS - AUTO_HOP_MS;
+        return;
+      }
+      if (performance.now() - lastStep.current >= AUTO_HOP_MS) hop(1);
+    }, 300);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // scroll-back to Nature only from the globe overview
   useEffect(() => {
@@ -58,7 +82,7 @@ export default function TravelChapter() {
       heading={travel.heading}
       cta={travel.continueLabel}
       canAdvance={atLast}
-      cueLabel={atLast ? undefined : pos < 0 ? 'Scroll to start the journey' : `Scroll · next place (${pos + 1} / ${list.length})`}
+      cueLabel={atLast ? undefined : pos < 0 ? 'The journey is about to begin…' : `Flying on… ${pos + 1} / ${list.length} · scroll to skip`}
       onEnter={(m) => travelScene.api?.arrive(m)}
       exits={{ takeOff: () => travelScene.api?.takeOff() ?? gsap.timeline() }}
     >
@@ -136,7 +160,7 @@ export default function TravelChapter() {
       </AnimatePresence>
 
       <p data-ui data-reveal className="pointer-events-none absolute top-[31vh] inset-x-0 text-center font-grotesk text-[0.55rem] tracking-[0.35em] uppercase opacity-50">
-        {selected == null ? `Scroll to fly through ${list.length} places · drag to spin` : `${dreams.length} in her dream list`}
+        {selected == null ? `${list.length} places, one after another · drag to spin` : `${dreams.length} in her dream list`}
       </p>
     </ChapterShell>
   );
