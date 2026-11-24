@@ -121,7 +121,7 @@ async function run(gpu, label, { viewport, dpr = 1, mobile = false, quality }) {
   r.canvas = await canvasInfo(page);
   r.introIdle = await sample(page, 5000);
 
-  await page.click('[data-testid="open"]');
+  await page.click('[data-testid="open-area"]');
   await page.waitForSelector('[data-testid="step-inside"]', { state: 'visible', timeout: 20000 });
   await page.waitForTimeout(2500);
   r.letterOpen = await sample(page, 4000);

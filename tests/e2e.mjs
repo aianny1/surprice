@@ -132,7 +132,7 @@ await scenario('desktop', async () => {
   // canvas is the same element before and after navigation (persistent stage)
   await page.evaluate(() => (window.__canvas = document.querySelector('[data-stage] canvas')));
 
-  await scrollUntil(page, () => !document.querySelector('[data-testid="open"]'), 'wheel');
+  await page.click('[data-testid="open-area"]');
   await sleep(500);
   await shot(page, 'd03-seal-crack');
   await sleep(1100);
@@ -271,7 +271,7 @@ await scenario('mobile', async () => {
   await visible(page, 'open');
   await sleep(500);
   await shot(page, 'm01-intro');
-  await scrollUntil(page, () => !document.querySelector('[data-testid="open"]'), 'key');
+  await page.tap('[data-testid="open-area"]');
   await visible(page, 'step-inside', 20000);
   await sleep(500);
   await shot(page, 'm02-letter');
@@ -307,7 +307,7 @@ await scenario('reduced-motion', async () => {
   const errors = track(page);
   await page.goto(`${BASE}/intro`);
   await visible(page, 'open');
-  await scrollUntil(page, () => !document.querySelector('[data-testid="open"]'), 'wheel');
+  await page.click('[data-testid="open-area"]');
   await visible(page, 'step-inside', 20000);
   await scrollUntil(page, () => location.pathname === '/universe', 'wheel');
   await page.waitForURL('**/universe', { timeout: 15000 });

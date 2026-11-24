@@ -76,8 +76,8 @@ export default function IntroChapter() {
   }, [open]);
 
   // ---------------------------------------------------------------- scroll controls
-  // 1) the first scroll opens the envelope
-  const pOpen = useScrollAdvance({ enabled: stage === 'closed', distance: 260, onComplete: () => open() });
+  // 1) a tap opens the envelope. It has to be a tap, not a scroll: browsers only allow sound after a
+  //    click/tap/key, so this same tap is what starts the music (engine/audio/Music.ts listens for it)
   // 2) once the letter has been readable for a moment, scrolling zooms it toward the light;
   //    a full scroll steps inside (T1 finishes the flight)
   const [canZoom, setCanZoom] = useState(false);
@@ -146,7 +146,26 @@ export default function IntroChapter() {
         </p>
       </header>
 
-      {stage === 'closed' && <ScrollCue ref={openBtn} p={pOpen} label="Scroll to open" testId="open" className="text-white/70" />}
+      {stage === 'closed' && (
+        <>
+          {/* the whole screen is the envelope's button */}
+          <button
+            type="button"
+            aria-label="Open the invitation"
+            data-testid="open-area"
+            onClick={() => open()}
+            className="pointer-events-auto absolute inset-0 z-0 cursor-pointer"
+          />
+          <div
+            ref={openBtn}
+            data-testid="open"
+            className="pointer-events-none invisible absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4rem)] flex flex-col items-center gap-2 font-grotesk text-[0.62rem] tracking-[0.4em] text-white/75 uppercase sm:bottom-[7vh]"
+          >
+            <span>Tap to open your invitation</span>
+            <span aria-hidden className="animate-pulse text-lg text-lavender">✦</span>
+          </div>
+        </>
+      )}
       <ScrollCue
         ref={stepBtn}
         p={pZoom}
